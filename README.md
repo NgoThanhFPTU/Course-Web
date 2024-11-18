@@ -58,11 +58,11 @@ This project is a next-generation online course platform designed to revolutioni
 ### Steps to Run Locally:
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/learning-platform.git
+   git clone https://github.com/NgoThanhFPTU/Course-Web.git
    ```
 2. Navigate to the project directory:
    ```bash
-   cd learning-platform
+   cd Course-Web
    ```
 3. Backend Setup:
    ```bash
