@@ -15,15 +15,16 @@ const ConfirmTeacherTable = () => {
   // const [selectedTeacher, setSelectedTeacher] = useState({})
   
   useEffect(() => {
-    if(status){
-      getTeacherRequest()
-      .then((res) => {setTeachers(res.data.data) 
-        // console.log(res);
-        setStatus(false)
+  if (status) {
+    getTeacherRequest()
+      .then((res) => {
+        setTeachers(res.data.data || []); // Đảm bảo `teachers` luôn là mảng
+        setStatus(false);
       })
-      .catch((err) => console.log(err))
-    }
-  }, [status]);
+      .catch((err) => console.error("Error fetching teachers:", err));
+  }
+}, [status]);
+
 
   const handleConfirm = async(id) => {
     const res = await updateStatusTeacherRequest(id, "Confirmed")
@@ -99,65 +100,66 @@ const ConfirmTeacherTable = () => {
                   </th>
                 </tr>
               </thead>
-              <tbody>
-                {teachers.map((teacher, index) => (
-                  <tr
-                    key={teacher._id + 1}
-                    className={`hover:bg-gray-100 cursor-pointer ${
-                      index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                    }`}
-                    onClick={() => handleRowClick(teacher)}
-                  >
-                    <td className="px-5 py-5 border-b border-gray-200 text-sm">
-                      <div className="flex items-center">
-                        <img
-                          src={teacher.user?.avatar}
-                          alt={teacher.user.name}
-                          className="w-10 h-10 rounded-full mr-3"
-                        />
-                        <div className="ml-3">
-                          <p className="text-gray-900 whitespace-no-wrap">
-                            {teacher.user?.name}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-5 py-5 border-b border-gray-200 text-sm">
-                      <p className="text-gray-900 whitespace-no-wrap">
-                        {teacher.user?.email}
-                      </p>
-                    </td>
-                    <td className="px-5 py-5 border-b border-gray-200 text-sm">
-                      <p className="text-gray-900 whitespace-no-wrap">
-                        {teacher.user?.phoneNumber}
-                      </p>
-                    </td>
-                    <td className="px-5 py-5 border-b border-gray-200 text-sm">
-                      <span
-                        className={`relative inline-block px-3 py-1 font-medium leading-tight ${
-                          teacher.status === "Confirmed"
-                            ? "text-green-900"
-                            : teacher.status === "Rejected"
-                            ? "text-black"
-                            : "text-gray-900"
-                        }`}
-                      >
-                        <span
-                          aria-hidden
-                          className={`absolute inset-0 ${
-                            teacher.isApproved === "Confirmed"
-                              ? "bg-primary"
-                              : teacher.isApproved === "Rejected"
-                              ? "bg-red-600"
-                              : "bg-gray-200"
-                          } opacity-50 rounded-full`}
-                        ></span>
-                        <span className="relative">{teacher.isApproved}</span>
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
+             <tbody>
+  {teachers.map((teacher, index) => (
+    <tr
+      key={teacher._id}
+      className={`hover:bg-gray-100 cursor-pointer ${
+        index % 2 === 0 ? "bg-gray-50" : "bg-white"
+      }`}
+      onClick={() => handleRowClick(teacher)}
+    >
+      <td className="px-5 py-5 border-b border-gray-200 text-sm">
+        <div className="flex items-center">
+          <img
+            src={teacher.user?.avatar || "/default-avatar.png"} // Dùng avatar mặc định nếu không có
+            alt={teacher.user?.name || "Unknown"} // Tránh lỗi nếu name không tồn tại
+            className="w-10 h-10 rounded-full mr-3"
+          />
+          <div className="ml-3">
+            <p className="text-gray-900 whitespace-no-wrap">
+              {teacher.user?.name || "Unknown Name"} {/* Tránh lỗi nếu name không tồn tại */}
+            </p>
+          </div>
+        </div>
+      </td>
+      <td className="px-5 py-5 border-b border-gray-200 text-sm">
+        <p className="text-gray-900 whitespace-no-wrap">
+          {teacher.user?.email || "No Email"} {/* Tránh lỗi nếu email không tồn tại */}
+        </p>
+      </td>
+      <td className="px-5 py-5 border-b border-gray-200 text-sm">
+        <p className="text-gray-900 whitespace-no-wrap">
+          {teacher.user?.phoneNumber || "No Phone Number"} {/* Tránh lỗi nếu phoneNumber không tồn tại */}
+        </p>
+      </td>
+      <td className="px-5 py-5 border-b border-gray-200 text-sm">
+        <span
+          className={`relative inline-block px-3 py-1 font-medium leading-tight ${
+            teacher.status === "Confirmed"
+              ? "text-green-900"
+              : teacher.status === "Rejected"
+              ? "text-black"
+              : "text-gray-900"
+          }`}
+        >
+          <span
+            aria-hidden
+            className={`absolute inset-0 ${
+              teacher.isApproved === "Confirmed"
+                ? "bg-primary"
+                : teacher.isApproved === "Rejected"
+                ? "bg-red-600"
+                : "bg-gray-200"
+            } opacity-50 rounded-full`}
+          ></span>
+          <span className="relative">{teacher.isApproved || "Pending"}</span>
+        </span>
+      </td>
+    </tr>
+  ))}
+</tbody>
+
             </table>
           </div>
         </div>

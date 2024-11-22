@@ -211,16 +211,21 @@ function BlogDetail() {
               <div>
                 <div className="flex lg:flex-row justify-between mb-4 lg:mb-8">
                   <div className="flex items-center gap-3 mb-4 lg:mb-0">
-                    <img
-                      src={blog.author.avatar}
-                      className=" w-10 h-10 object-cover rounded-full"
-                      alt=""
-                    />
-                    <div className="flex gap-2 lg:gap-4 text-xs lg:text-sm">
-                      <li className="list-none">{blog.author.name}</li>
-                      <li>{formatDate2(blog.createdAt)}</li>
-                    </div>
-                  </div>
+  {blog?.author?.avatar ? (
+    <img
+      src={blog.author.avatar}
+      className="w-10 h-10 object-cover rounded-full"
+      alt={`${blog?.author?.name || "Author"}'s avatar`}
+    />
+  ) : (
+    <CgProfile className="w-10 h-10 text-gray-400" />
+  )}
+  <div className="flex gap-2 lg:gap-4 text-xs lg:text-sm">
+    <li className="list-none">{blog?.author?.name || "Unknown Author"}</li>
+    <li>{formatDate2(blog?.createdAt)}</li>
+  </div>
+</div>
+
                   <div className="">
                     <Share2
                       size="16px"
@@ -279,98 +284,71 @@ function BlogDetail() {
             </h2>
             <div className="pb-4 lg:pb-8 border-b-2">
               {comments.length > 0 ? (
-                comments.map((comment) => (
-                  <div key={comment._id} className="mb-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={comment.user.avatar}
-                          className=" w-8 h-8 object-cover rounded-full"
-                          alt=""
-                        />
-                        <div className="flex flex-col">
-                          <span className="font-semibold text-sm">
-                            {comment.user.name}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {formatDate2(comment.createdAt)}
-                          </span>
-                        </div>
-                      </div>
-                      {user && user._id === comment.user._id && (
-                        <div className="relative">
-                          <button
-                            className="text-gray-500 hover:text-gray-700"
-                            onClick={() => toggleDropdown(comment._id)}
-                          >
-                            &#8226;&#8226;&#8226;
-                          </button>
-                          {openDropdown === comment._id && (
-                            <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded shadow-lg z-50">
-                              <ul className="py-1">
-                                <li>
-                                  <button
-                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                                    onClick={() => {
-                                      setCommentText(comment.content);
-                                      setCommentId(comment._id); // Set the commentId for editing
-                                      handleEditClick();
-                                    }}
-                                  >
-                                    Edit
-                                  </button>
-                                </li>
-                                <li>
-                                  <button
-                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                                    onClick={() =>
-                                      handleDeleteComment(comment._id)
-                                    }
-                                  >
-                                    Delete
-                                  </button>
-                                </li>
-                              </ul>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    <div className="ml-11">
-                      {isEditing && commentId === comment._id ? (
-                        <textarea
-                          ref={textareaRef}
-                          value={commentText}
-                          onChange={handleInputChange}
-                          onKeyPress={handleInputKeyPress}
-                          className="w-full border border-gray-300 rounded p-2"
-                          rows="4"
-                        />
-                      ) : (
-                        <p className="text-sm">{comment.content}</p>
-                      )}
-                      {isEditing && commentId === comment._id && (
-                        <div className="mt-2 flex gap-2">
-                          <button
-                            onClick={handleSaveEdit}
-                            className="bg-primary text-white px-4 py-1 rounded"
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={handleCancelEdit}
-                            className="bg-gray-300 px-4 py-1 rounded"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm">No comments yet.</p>
-              )}
+  comments.map((comment) => (
+    <div key={comment._id} className="mb-4">
+      <div className="flex justify-between items-center mb-2">
+        <div className="flex items-center gap-3">
+          {comment?.user?.avatar ? (
+            <img
+              src={comment.user.avatar}
+              className="w-8 h-8 object-cover rounded-full"
+              alt={`${comment?.user?.name || "User"}'s avatar`}
+            />
+          ) : (
+            <CgProfile className="w-8 h-8 text-gray-400" />
+          )}
+          <div className="flex flex-col">
+            <span className="font-semibold text-sm">
+              {comment?.user?.name || "Anonymous"}
+            </span>
+            <span className="text-xs text-gray-500">
+              {formatDate2(comment?.createdAt)}
+            </span>
+          </div>
+        </div>
+        {user && user._id === comment?.user?._id && (
+          <div className="relative">
+            <button
+              className="text-gray-500 hover:text-gray-700"
+              onClick={() => toggleDropdown(comment._id)}
+            >
+              &#8226;&#8226;&#8226;
+            </button>
+            {openDropdown === comment._id && (
+              <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded shadow-lg z-50">
+                <ul className="py-1">
+                  <li>
+                    <button
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                      onClick={() => {
+                        setCommentText(comment.content);
+                        setCommentId(comment._id);
+                        handleEditClick();
+                      }}
+                    >
+                      Edit
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                      onClick={() => handleDeleteComment(comment._id)}
+                    >
+                      Delete
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  ))
+) : (
+  <p className="text-sm">No comments yet.</p>
+)}
+
             </div>
 
             <form onSubmit={handleSubmit} className="mt-4">

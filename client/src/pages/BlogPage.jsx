@@ -74,22 +74,24 @@ function BlogPage() {
                 <div className="w-full lg:w-1/2">
                   {/* Header Blog */}
                   <div className="flex lg:flex-row justify-between items-start lg:items-center mb-4 lg:mb-0">
-                    <div className="flex items-center">
-                      {/* <CgProfile className="text-2xl lg:text-4xl" /> */}
-                      <img
-                        src={blog.author.avatar}
-                        className=" w-10 h-10 object-cover rounded-full"
-                        alt=""
-                      />
-                      <div className="block ml-4 text-xs lg:text-sm">
-                        <p>{blog.author.name}</p>
-                        <div className="flex gap-2 lg:gap-4">
-                          <li className="list-none">
-                            {formatDate2(blog.createdAt)}
-                          </li>
-                        </div>
-                      </div>
-                    </div>
+                 <div className="flex items-center">
+  {blog.author && blog.author.avatar ? (
+    <img
+      src={blog.author.avatar}
+      className="w-10 h-10 object-cover rounded-full"
+      alt={`${blog.author.name || "Author"}'s avatar`}
+    />
+  ) : (
+    <CgProfile className="text-2xl lg:text-4xl" />
+  )}
+  <div className="block ml-4 text-xs lg:text-sm">
+    <p>{blog.author?.name || "Unknown Author"}</p>
+    <div className="flex gap-2 lg:gap-4">
+      <li className="list-none">{formatDate2(blog.createdAt)}</li>
+    </div>
+  </div>
+</div>
+
                     <div className="self-start lg:self-center">
                       <Share2 size="16px" className="lg:size-20px" />
                     </div>

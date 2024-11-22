@@ -13,16 +13,22 @@ const ConfirmCourseTable = ({ courses }) => {
   }, [courses]);
 
   useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      setFilteredCourses(
-        courses.filter((course) =>
+  const delayDebounceFn = setTimeout(() => {
+    setFilteredCourses(
+      courses
+        .map((course) => ({
+          ...course,
+          courseName: course.courseName || "", // Gán giá trị mặc định nếu courseName không tồn tại
+        }))
+        .filter((course) =>
           course.courseName.toLowerCase().includes(searchTerm.toLowerCase())
         )
-      );
-    }, 300);
+    );
+  }, 300);
 
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, courses]);
+  return () => clearTimeout(delayDebounceFn);
+}, [searchTerm, courses]);
+
 
   const handleRowClick = (id) => {
     navigate(`${id}`);
@@ -119,7 +125,7 @@ const ConfirmCourseTable = ({ courses }) => {
                     </td>
                     <td className="px-5 py-5 border-b border-gray-200 text-sm">
                       <p className="text-gray-900 whitespace-no-wrap">
-                        {course.instructor.username}
+                        {course.instructor?.username || "No insstructor"}
                       </p>
                     </td>
                     <td className="px-5 py-5 border-b border-gray-200 text-sm">

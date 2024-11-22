@@ -1,150 +1,187 @@
 var User = require("../models/user");
 var bcrypt = require("bcryptjs");
 var jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const Course = require("../models/course");
 const { addProgress } = require("./userChapterProgressController");
 const { createNotification } = require("./notificationController");
-var nodemailer = require("nodemailer");
+const transporter = require("../configs/nodemailer");
+
+const verifyEmail = async (req, res) => {
+  const { token } = req.params;
+
+  try {
+    const user = await User.findOne({
+      emailVerificationToken: token,
+      emailVerificationExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired verification token.",
+      });
+    }
+
+    user.isEmailVerified = true;
+    user.emailVerificationToken = undefined;
+    user.emailVerificationExpires = undefined;
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Email verified successfully.",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Server error. Please try again later.",
+    });
+  }
+};
 
 const register = async (req, res) => {
   try {
-    // Kiểm tra nếu password không được gửi
-    if (!req.body.password) {
-      return res.status(400).json({
-        success: false,
-        message: "Password is required",
-      });
-    }
-
-    // Kiểm tra nếu username và email không được gửi
     const { username, email, password, ...otherFields } = req.body;
-    if (!username || !email) {
+
+    if (!username || !email || !password) {
       return res.status(400).json({
         success: false,
-        message: "Username and email are required",
+        message: "Username, email, and password are required.",
       });
     }
 
-    // Kiểm tra nếu username hoặc email đã tồn tại
     const existingUser = await User.findOne({
-      $or: [{ username: username }, { email: email }],
+      $or: [{ username }, { email }],
     });
 
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: "Username or email already exists",
+        message: "Username or email already exists.",
       });
     }
 
-    // Hash password
     const salt = bcrypt.genSaltSync(10);
-    const hash = bcrypt.hashSync(password, salt);
+    const hashedPassword = bcrypt.hashSync(password, salt);
 
-    // Tạo user mới
+    const token = crypto.randomBytes(32).toString("hex");
+
     const newUser = new User({
       username,
       email,
-      password: hash,
-      avatar: "https://img.upanh.tv/2024/06/18/user-avatar.png",
-      notificationRooms: ["room_system"],
+      password: hashedPassword,
+      emailVerificationToken: token,
+      emailVerificationExpires: Date.now() + 3600000,
       ...otherFields,
     });
 
-    // Thêm room thông báo cá nhân
-    const defaultNotificationRoom = "room_profile_" + newUser._id;
-    newUser.notificationRooms.push(defaultNotificationRoom);
-
-    // Lưu vào database
     await newUser.save();
 
-    // Gửi thông báo (nếu có tích hợp hệ thống thông báo realtime)
-    const notification = {
-      title: "System Notification",
-      name: "New Account",
-      message: "Your account has been successfully created",
-      link: "/",
-      type: "system",
-      image: "https://img.upanh.tv/2024/07/21/logo11.jpg",
+    // Gửi email xác minh
+    console.log("Transporter Object Before SendMail:", transporter);
+    console.log("SendMail Function:", typeof transporter.sendMail);
+
+    const verifyUrl = `${process.env.FRONTEND_URL}/verify-email/${token}`;
+
+    console.log("FRONTEND_URL:", process.env.FRONTEND_URL);
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Verify Your Email",
+      html: `<a href="${verifyUrl}">Click here to verify your email</a>`,
     };
 
-    if (res.io) {
-      createNotification(newUser._id, res.io, notification, ["room_system"]);
-    }
+    await transporter.sendMail(mailOptions); // Gửi email
 
-    // Phản hồi thành công
     return res.status(200).json({
       success: true,
-      message: "Account created successfully",
+      message: "Account created successfully. Please verify your email.",
     });
-  } catch (err) {
-    // Log lỗi để dễ dàng debug
-    console.error("Register Error:", err.message);
-
-    // Phản hồi lỗi chi tiết
+  } catch (error) {
+    console.error("Register Error:", error.message);
     return res.status(500).json({
       success: false,
-      message: "Internal Server Error",
-      error: err.message,
+      message: "Registration failed. Please try again later.",
     });
   }
 };
 
 const login = async (req, res) => {
-  const username = req.body.username;
+  const { username, password } = req.body;
 
   try {
+    // Tìm user theo username
     const user = await User.findOne({ username });
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found",
+        message: "User not found. Please check your username.",
       });
     }
 
-    const checkCorrectPassword = await bcrypt.compare(
-      req.body.password,
-      user.password
-    );
+    // Kiểm tra trạng thái xác minh email chỉ áp dụng cho role "user" và "teacher"
+    if (
+      (user.role === "user" || user.role === "teacher") &&
+      !user.isEmailVerified
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Your email is not verified. Please verify your email first.",
+      });
+    }
 
-    if (!checkCorrectPassword) {
+    // Kiểm tra mật khẩu
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordCorrect) {
       return res.status(401).json({
         success: false,
-        message: "Incorrect email or password",
+        message: "Incorrect username or password.",
       });
     }
 
-    const { password, role, ...rest } = user._doc;
-
+    // Tạo token JWT
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET_KEY,
-      { expiresIn: "15d" }
+      { expiresIn: "15d" } // Token hết hạn sau 15 ngày
     );
 
-    // set token in cookies
-    console.log("token: " + token);
+    // Loại bỏ các thông tin nhạy cảm trước khi trả về
+    const {
+      password: _,
+      emailVerificationToken,
+      emailVerificationExpires,
+      ...userData
+    } = user._doc;
+
+    // Đặt token vào cookie và trả về thông tin user
     res
       .cookie("accessToken", token, {
-        // httpOnly: true,
-        expires: token.expiresIn,
+        httpOnly: true, // Ngăn chặn truy cập từ phía client
+        secure: process.env.NODE_ENV === "production", // Sử dụng HTTPS trong môi trường production
+        maxAge: 15 * 24 * 60 * 60 * 1000, // Cookie tồn tại 15 ngày
       })
       .status(200)
       .json({
         success: true,
-        message: "Successfully login",
-        token: token,
-        role: role,
-        data: { ...rest },
+        message: "Login successful.",
+        token,
+        data: userData,
       });
   } catch (err) {
+    console.error("Login Error:", err.message);
     res.status(500).json({
       success: false,
-      message: "fail to login",
+      message: "Internal server error. Please try again later.",
     });
   }
 };
+
 const createUser = async (req, res) => {
   const newUser = new User(req.body);
 
@@ -522,6 +559,7 @@ const resetPassword = async (req, res) => {
 };
 
 module.exports = {
+  verifyEmail,
   register,
   login,
   createUser,

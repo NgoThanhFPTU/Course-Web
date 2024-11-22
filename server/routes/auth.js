@@ -1,5 +1,6 @@
 var express = require("express");
 const {
+  verifyEmail,
   login,
   register,
   getAllUser,
@@ -25,6 +26,7 @@ const authRoute = express.Router();
 
 authRoute.post("/login", login);
 authRoute.post("/register", register);
+authRoute.get("/verify-email/:token", verifyEmail);
 authRoute.put("/changePassword", verifyUser, changePassword);
 authRoute.get("/profile", verifyUser, getProfile);
 authRoute.get("/logout", logout);

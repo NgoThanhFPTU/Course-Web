@@ -59,11 +59,16 @@ function SignInPage() {
     setCredentials((prev) => ({ ...prev, [e.target.id]: e.target.value }));
   };
 
-  const handleClick = async (e) => {
-    e.preventDefault();
+ const handleClick = async (e) => {
+  e.preventDefault();
+  dispatch(setGlobalLoading(true));
+
+  try {
     let res = await onLogin(credentials);
-    dispatch(setGlobalLoading(true));
+
     if (res && res.status === 200) {
+      const { role } = res.data;
+
       dispatch(
         loginSuccess({
           user: res.data.data,
@@ -73,21 +78,27 @@ function SignInPage() {
       dispatch(getCart());
       dispatch(setGlobalLoading(false));
       toast.success("Login successfully");
-      console.log(res.data.role);
-      if (res.data.role === "teacher") {
+
+      // Điều hướng dựa trên role
+      if (role === "teacher") {
         navigate("/teacher/managecourses");
-      } else if (res.data.role === "admin") {
+      } else if (role === "admin") {
         navigate("/admin/default");
       } else {
         navigate("/");
-        console.log("vl");
       }
     } else if (res.status === 401) {
       toast.error("Username or password is wrong");
     } else {
       toast.error("Username is invalid");
     }
-  };
+  } catch (error) {
+    console.error("Error during login:", error);
+    toast.error("Login failed. Please try again later.");
+    dispatch(setGlobalLoading(false));
+  }
+};
+
   const handleLoginGoogle = () => {
     dispatch(setGlobalLoading(true));
     window.open("http://localhost:4000/auth/google/", "_self");

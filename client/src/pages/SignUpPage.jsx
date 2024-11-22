@@ -79,8 +79,8 @@ const handleClick = async (e) => {
   try {
     const res = await onRegister(credentials);
     if (res.data.success) {
-      toast.success("Registration successful!");
-      setTimeout(() => navigate("/signin"), 3000);
+      toast.success("Registration successful! Please verify your email.");
+      setTimeout(() => navigate(`/verify-email?email=${credentials.email}`), 3000); // Chuyển hướng đến VerifyEmailPage
     } else {
       toast.error(res.data.message || "Registration failed!");
     }
@@ -89,6 +89,7 @@ const handleClick = async (e) => {
     toast.error("Server error!");
   }
 };
+
 
 
   const handleLoginGoogle = () => {

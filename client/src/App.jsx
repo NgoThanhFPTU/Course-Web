@@ -15,6 +15,7 @@ import "swiper/css/pagination";
 import LearningPage from "./pages/LearningPage";
 import SignInPage from "./pages/SignInPage";
 import SignUpPage from "./pages/SignUpPage";
+import VerifyEmailPage from "./pages/VerigyEmailPage";
 import { GlobalStyles } from "@mui/material";
 
 import Dashboard from "./components/Admin/default/Dashboard";
@@ -77,8 +78,9 @@ function App() {
 
       <BrowserRouter>
         <Routes>
-          <Route path="/signin" element={<SignInPage />} />
           <Route path="/signup" element={<SignUpPage />} />
+            <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
+          <Route path="/signin" element={<SignInPage />} />
           <Route path="/forgotPassword" element={<ForgotPassWord />} />
           <Route path="/reset_password/:token" element={<ResetPassword />} />
 
